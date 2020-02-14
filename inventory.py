@@ -2,7 +2,8 @@
 import tkinter as tk
 from tkinter import *
 from tkinter.filedialog import asksaveasfilename
-from tkinter.filedialog import askopenfilenames
+from tkinter.filedialog import askopenfilename
+import tkinter.messagebox as msg
 from tkinter import ttk
 import numpy as np
 from pathlib import Path
@@ -21,8 +22,9 @@ the modified data frames to csv
 """
 
 """
-remove_inventory is a function that iterates over an inventory csv file, if a SKU # is in 
-the Remove xlsx file, the function will remove the row correspoding to the SKU #. 
+remove_inventory is a function that iterates over an inventory csv file, if a SKU # is in
+#.
+the Remove xlsx file, the function will remove the row correspoding to the SKU
 :param df: Inventory CSV file (Dataframe)
 :param dfr: Products to be removed xlsx file (Dataframe)
 """
@@ -30,7 +32,6 @@ the Remove xlsx file, the function will remove the row correspoding to the SKU #
 initDir = "~/Desktop/Git/inventory-scripts/data"
 files = [('CSV Files', '*.csv'), ('Excel Files',
                                   '*.xlsx'), ('Text Files', '*.txt')]
-
 
 
 class App(tk.Tk):
@@ -41,26 +42,41 @@ class App(tk.Tk):
         self.geometry("500x500")
 
         self.menubar = tk.Menu(self, bg="lightgrey", fg="white")
-        self.file_menu = tk.Menu(self.menubar, tearoff=0, bg="lightgrey", fg="white")
-        
-        self.file_menu.add_command(label="Open", command=self.file_open, accelerator="Ctrl+O")
-        self.file_menu.add_command(label="Save", command=self.file_open, accelerator="Ctrl+S")
+        self.file_menu = tk.Menu(
+            self.menubar, tearoff=0, bg="lightgrey", fg="white")
+
+        self.file_menu.add_command(
+            label="Open", command=self.file_open, accelerator="Ctrl+O")
+        self.file_menu.add_command(
+            label="Save", command=self.file_open, accelerator="Ctrl+S")
 
         self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.config(menu=self.menubar)
-        
-        
+
+        self.open_file_btn = tk.Button(
+            self, text="Open", command=self.file_open)
+
+        self.bind("<Control-o>", self.file_open)
+        # self.bind("<Control-s>", self.file_save)
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
     def file_open(self, event=None):
-        file = askopenfilenames()
-        
-        while file and not file.endswith(".csv"):
-            msg.showerror("Wrong File Type, please load an csv or xlsx file!")
-            file = askopenfilenames()
-        
+        file = askopenfilename()
+
+        while file and not file.endswith(".csv") or file.endswith(".xlsx"):
+            msg.showerror(
+                message="Wrong File Type, please load an csv or xlsx file!")
+            file = askopenfilename()
+
+    def on_closing(self):
+        if msg.askokcancel("quit", "Do you want to quit?"):
+            self.destroy()
+
 
 def save():
     file_name = asksaveasfilename(filetypes=files, defaultextension=files)
     return file_name
+
 
 def remove_inventory(df, dfr):
     for row in df.itertuples():
@@ -70,7 +86,8 @@ def remove_inventory(df, dfr):
     file_name = save()
     df.to_csv(file_name, index=False)
 
-def change_to_clearance(df,dfc):
+
+def change_to_clearance(df, dfc):
     for row in df.itertuples():
         for sku in dfc.sku:
             if(row.sku == sku):
@@ -78,7 +95,7 @@ def change_to_clearance(df,dfc):
                     df.loc['categories'] = 'Default Category/Clearance,Landmark Categories/Clearance'
                 else:
                     print("Category: [{}] ".format(row.categories))
-                    
+
     return df
 
 
@@ -87,14 +104,14 @@ if __name__ == "__main__":
     app.mainloop()
 
 
-# root.inv_filepath = askopenfilenames(
+# root.inv_filepath = askopenfilename(
 #     initialdir=initDir, title="choose your inventory file", filetypes=files)
 # inv_filepath = ''.join(root.inv_filepath)
 # root.withdraw()
 
 # df_inv = pd.read_csv(inv_filepath, engine="python", sep=',', quotechar='"', error_bad_lines=False)
 
-# root.rem_filepath = askopenfilenames(
+# root.rem_filepath = askopenfilename(
 #     initialdir=initDir, title="choose your product removal file")
 # rem_filepath = ''.join(root.rem_filepath)
 # root.withdraw()
@@ -116,4 +133,3 @@ if __name__ == "__main__":
 #     else:
 #         print('Processing: [{}] ...'.format(name))
 #         df_inv = change_to_clearance(df_inv, df)
-
